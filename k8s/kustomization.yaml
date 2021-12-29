@@ -1,0 +1,3 @@
+resources:
+  - spring-boot-k8s-demo.yaml
+  - ingress.yaml

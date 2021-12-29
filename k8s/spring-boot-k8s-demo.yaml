@@ -1,0 +1,103 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spring-boot-k8s
+  namespace: test-k3s
+  labels:
+    name: spring-boot-k8s
+spec:
+  replicas: 3
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: spring-boot-k8s
+  template:
+    metadata:
+      labels:
+        app: spring-boot-k8s
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: node1
+      containers:
+        - name: spring-boot-k8s
+          image: registry.cn-hangzhou.aliyuncs.com/songshuai3223/spring-boot-k8s:0.0.1
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: 1000m
+              memory: 2048Mi
+            limits:
+              cpu: 2000m
+              memory: 2048Mi
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          volumeMounts:
+            - name: spring-boot-k8s-application
+              mountPath: /app/conf/application.properties
+              subPath: application.properties
+            - name: spring-boot-k8s-application-dev
+              mountPath: /app/conf/application-dev.properties
+              subPath: application-dev.properties
+            - name: spring-boot-k8s-application-prod
+              mountPath: /app/conf/application-prod.properties
+              subPath: application-prod.properties
+            - name: spring-boot-k8s-application-test
+              mountPath: /app/conf/application-test.properties
+              subPath: application-test.properties
+          env:
+            - name: SERVICE_NAME
+              value: spring-boot-k8s
+            - name: FORMAT_MESSAGES_PATTERN_DISABLE_LOOKUPS
+              value: "true"
+      volumes:
+        - name: spring-boot-k8s-application
+          configMap:
+            name: spring-boot-k8s-application
+            items:
+              - key: application.properties
+                path: application.properties
+        - name: spring-boot-k8s-application-dev
+          configMap:
+            name: spring-boot-k8s-application-dev
+            items:
+              - key:  application-dev.properties
+                path: application-dev.properties
+        - name: spring-boot-k8s-application-prod
+          configMap:
+            name: spring-boot-k8s-application-prod
+            items:
+              - key:  application-prod.properties
+                path:  application-prod.properties
+        - name: spring-boot-k8s-application-test
+          configMap:
+            name: spring-boot-k8s-application-test
+            items:
+              - key: application-test.properties
+                path: application-test.properties
+
+
+      imagePullSecrets:
+        - name: login
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: spring-boot-k8s
+  namespace: test-k3s
+  labels:
+    app: spring-boot-k8s
+spec:
+  type: NodePort
+  selector:
+    app: spring-boot-k8s
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30025
+
