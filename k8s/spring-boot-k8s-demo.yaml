@@ -6,7 +6,7 @@ metadata:
   labels:
     name: spring-boot-k8s
 spec:
-  replicas: 3
+  replicas: 2
   strategy:
     rollingUpdate:
       maxSurge: 1
@@ -19,8 +19,6 @@ spec:
       labels:
         app: spring-boot-k8s
     spec:
-      nodeSelector:
-        kubernetes.io/hostname: node1
       containers:
         - name: spring-boot-k8s
           image: registry.cn-hangzhou.aliyuncs.com/songshuai3223/spring-boot-k8s:0.0.1
@@ -85,19 +83,22 @@ spec:
 
 ---
 
-apiVersion: v1
-kind: Service
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
-  name: spring-boot-k8s
+  name: spring-boot-k8s        #自定义ingress名称
   namespace: test-k3s
-  labels:
-    app: spring-boot-k8s
 spec:
-  type: NodePort
-  selector:
-    app: spring-boot-k8s
-  ports:
-    - port: 8080
-      targetPort: 8080
-      nodePort: 30025
+  ingressClassName: spring-boot-k8s
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: spring-boot-k8s
+                port:
+                  number: 8080
 
